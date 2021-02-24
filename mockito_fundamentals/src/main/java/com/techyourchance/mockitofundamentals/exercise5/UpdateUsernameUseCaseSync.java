@@ -35,12 +35,12 @@ public class UpdateUsernameUseCaseSync {
             endpointResult = mUpdateUsernameHttpEndpointSync.updateUsername(userId, username);
         } catch (NetworkErrorException e) {
             // the bug here is "swallowed" exception instead of return
+            return UseCaseResult.FAILURE;
         }
 
         if (isSuccessfulEndpointResult(endpointResult)) {
-            // the bug here is reversed arguments
-            User user = new User(endpointResult.getUsername(), endpointResult.getUserId());
-            mEventBusPoster.postEvent(new UserDetailsChangedEvent(new User(userId, username)));
+            User user = new User(endpointResult.getUserId(), endpointResult.getUsername());
+            mEventBusPoster.postEvent(new UserDetailsChangedEvent(user));
             mUsersCache.cacheUser(user);
             return UseCaseResult.SUCCESS;
         } else {
@@ -50,7 +50,6 @@ public class UpdateUsernameUseCaseSync {
 
     private boolean isSuccessfulEndpointResult(EndpointResult endpointResult) {
         // the bug here is the wrong definition of successful response
-        return endpointResult.getStatus() == EndpointResultStatus.SUCCESS
-                || endpointResult.getStatus() == EndpointResultStatus.GENERAL_ERROR;
+        return endpointResult.getStatus() == EndpointResultStatus.SUCCESS;
     }
 }
